@@ -1,0 +1,32 @@
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+.npm
+.cache
+.env
+
+# Python
+venv/
+.venv/
+env/
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# OS
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Project Specific
+backend/*.txt
+backend/*.json
+!backend/requirements.txt
+backend/nexus_cache.db
+backend/nexus_vector_db/
