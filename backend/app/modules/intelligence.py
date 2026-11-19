@@ -20,7 +20,7 @@ class StrategicAIEngine(BaseEnricher):
     Switches from Gemini to Llama-3 on Groq for higher rate limits and <1s latency.
     """
     
-    def __init__(self, model_name: str = "llama-3.3-70b-versatile"):
+    def __init__(self, model_name: str = "openai/gpt-oss-120b"):
         self.api_key = os.getenv("GROQ_API_KEY")
         self.model_name = model_name
         

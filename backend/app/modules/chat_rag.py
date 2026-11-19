@@ -11,7 +11,7 @@ from ..services.scraper_bridge import ScraperBridge
 logger = logging.getLogger(__name__)
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     api_key=os.environ.get("GROQ_API_KEY"),
     temperature=0.2
 )

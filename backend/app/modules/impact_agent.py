@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 from typing import TypedDict, List
 from langchain_groq import ChatGroq
@@ -18,7 +19,7 @@ class AgentState(TypedDict):
 
 # Initialize LLM
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     api_key=os.environ.get("GROQ_API_KEY"),
     temperature=0.1
 )
@@ -67,17 +68,23 @@ workflow.add_edge("assess_risk", END)
 # Compile the agent
 impact_agent_app = workflow.compile()
 
+# Groq's free/on-demand tier caps throughput at a low tokens-per-minute budget.
+# Each article runs 3 sequential LLM calls, so running all articles concurrently
+# bursts well past that budget and trips 429s. Cap how many articles' chains
+# run at once so calls trickle out within the rate limit instead of bursting.
+_CONCURRENCY_LIMIT = 3
+_semaphore = asyncio.Semaphore(_CONCURRENCY_LIMIT)
+
 async def generate_impact_chain(article_summary: str) -> List[str]:
     """Helper function to run the LangGraph agent for an article."""
     if not os.environ.get("GROQ_API_KEY") or not article_summary:
         return []
-        
-    try:
-        # Run the graph synchronously for simplicity within async wrapper, or use ainvoke if supported natively by chains easily
-        # We'll use the compiled graph's ainvoke
-        initial_state = {"article_summary": article_summary[:2000]} # Limit context
-        result = await impact_agent_app.ainvoke(initial_state)
-        return result.get("impact_chain", [])
-    except Exception as e:
-        logger.error(f"Impact Agent failed: {e}")
-        return []
+
+    async with _semaphore:
+        try:
+            initial_state = {"article_summary": article_summary[:2000]} # Limit context
+            result = await impact_agent_app.ainvoke(initial_state)
+            return result.get("impact_chain", [])
+        except Exception as e:
+            logger.error(f"Impact Agent failed: {e}")
+            return []

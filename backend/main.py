@@ -1,5 +1,13 @@
 import logging
+import sys
+import asyncio
 from dotenv import load_dotenv
+
+# Playwright needs asyncio subprocess support to launch headless Chromium.
+# Windows can default to the SelectorEventLoop, which raises NotImplementedError
+# on subprocess creation — force the Proactor policy before anything else runs.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
